@@ -7,7 +7,6 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
-    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
         body {
@@ -27,6 +26,9 @@
 <body>
 
     <div id='map'></div>
+
+    <button onclick="expandAll()">expand all</button>
+    <button onclick="contractAll()">contract all</button>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
         var startingPoint = [24.9456, 60.16776];
@@ -42,17 +44,20 @@
         var base_hexagons = { type: "FeatureCollection", features: [] }
         var stack_hexagons = { type: "FeatureCollection", features: [] }
 
+        var NUM_HEX = -1;
+        var poped_out = new Set();
+
         $.getJSON("./helsinki_hexagons.json", function (data) {
+
+
+            NUM_HEX = data['features'].length;
 
             // get k-sized feature vectors for all hexagons
             const num_features = 8;
             const scale = 500;
-            const base_height = 20;
+            const base_height = 60;
 
             var last_id = -1;
-
-            const poped_out = new Set();
-
 
             const min_top_layer = [225, 203, 255]
             const max_top_layer = [52, 0, 124]
@@ -83,7 +88,7 @@
 
                 // all poped out
 
-                let cur_height = 0;
+                let cur_height = base_height;
                 for (let i = 0; i < num_features; i++) {
 
                     stack_hexagons['features'].push({
@@ -120,8 +125,6 @@
                 })
 
             }
-
-            console.log('Hexa', base_hexagons);
 
             map.on('load', function () {
 
@@ -218,9 +221,26 @@
                         map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
                     }
                 });
+
+                map.on('mouseleave', 'base-hexagons', (e) => {
+
+                    map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+
+                });
             });
         });
 
+        function expandAll() {
+            for (let i = 0; i < NUM_HEX; i++) {
+                poped_out.add(i)
+            }
+            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+        }
+
+        function contractAll(){
+            poped_out.clear()
+            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+        }
 
     </script>
 
