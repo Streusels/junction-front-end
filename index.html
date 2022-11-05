@@ -52,6 +52,7 @@
         const num_features = 6;
         // get k-sized feature vectors for all hexagons
         const scale = 4500;
+        const edge_scale = 0.05;
         const base_height = 60;
 
         var base_hexagons = { type: "FeatureCollection", features: [] }
@@ -200,7 +201,7 @@
                 let cur_height = base_height;
                 for (let i = 0; i < num_features; i++) {
 
-                    if(hexData.stats[hexagon][i] == 0) {
+                    if(hexData.stats[hexagon][i] < 0.001) {
                         continue
                     }
 
@@ -222,12 +223,14 @@
                 // initial top layer
                 let col = (hexData.sums[hexagon] - min_sum) / max_sum;
 
+                let ccol = `rgb(${Math.floor(col * max_top_layer[0] + (1 - col) * min_top_layer[0])},
+                                        ${Math.floor(col * max_top_layer[1] + (1 - col) * min_top_layer[1])},
+                                        ${Math.floor(col * max_top_layer[2] + (1 - col) * min_top_layer[2])})`
+
                 base_hexagons['features'].push({
                     type: "Feature",
                     properties: {
-                        color: `rgb(${Math.floor(col * max_top_layer[0] + (1 - col) * min_top_layer[0])},
-                                        ${Math.floor(col * max_top_layer[1] + (1 - col) * min_top_layer[1])},
-                                        ${Math.floor(col * max_top_layer[2] + (1 - col) * min_top_layer[2])})`,
+                        color: ccol,
                         base_height: 0,
                         top_height: base_height,
                         show: true,
@@ -237,6 +240,71 @@
                     geometry: HEX_GRID['features'][hexagon].geometry,
                     id: parseInt(hexagon)
                 })
+
+                // Antons Deckel  
+                stack_hexagons['features'].push({ 
+                    type: "Feature", 
+                    properties: { 
+                        color: ccol, 
+                        base_height: cur_height, 
+                        top_height: cur_height + base_height, 
+                        show: false, 
+                        id: parseInt(hexagon) 
+                    }, 
+                    geometry: HEX_GRID['features'][hexagon].geometry 
+                }) 
+                cur_height += base_height 
+ 
+                /* Antons säulen
+                hex_coords = Array.from(HEX_GRID['features'][hexagon].geometry.coordinates[0])
+                center = [0,0] 
+                for  (let i = 0; i < 6; i++) { 
+                    center[0] += hex_coords[i][0] 
+                    center[1] += hex_coords[i][1] 
+                } 
+                center[0] /= 6 
+                center[1] /= 6 
+ 
+                scaled_coords = [] 
+                for (let i = 0; i < 7; i++) { 
+                    scaled_coords.push( 
+                        [ 
+                            edge_scale * (hex_coords[i][0] - center[0]), 
+                            edge_scale * (hex_coords[i][1] - center[1]), 
+                        ] 
+                    ) 
+                } 
+                edge_geoms = [] 
+                for (let i = 0; i < 6; i++) { 
+                    curr_geom = {"type": "Polygon", "coordinates": [[]]} 
+                    coords = [] 
+                    for (let j = 0; j < 7; j++) { 
+                        coords.push( 
+                            [ 
+                                scaled_coords[j][0] + hex_coords[i][0], 
+                                scaled_coords[j][1] + hex_coords[i][1] 
+                            ] 
+                        ) 
+                    } 
+                    curr_geom.coordinates[0] = coords 
+                    edge_geoms.push(curr_geom) 
+                } 
+                 
+                // add fancy outline stuff to hexagons 
+                for (let i = 0; i < 6; i++) { 
+                    stack_hexagons['features'].push({ 
+                        type: "Feature", 
+                        properties: { 
+                            color: 'rgb(2,2,2)', 
+                            base_height: base_height, 
+                            top_height: cur_height, 
+                            show: false, 
+                            id: parseInt(hexagon) 
+                        }, 
+                        geometry: edge_geoms[i] 
+                    }) 
+                }
+                */
             }
 
             if (!init) {
