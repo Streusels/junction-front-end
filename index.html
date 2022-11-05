@@ -25,15 +25,16 @@
         <span id="c4" class="dot"></span>
         <span id="c5" class="dot"></span>
 
+        
         <input min="0" max="4" steps="1" value=3 type="range" id="s1" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value=5 type="range" id="s2" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s3" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s4" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s5" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s6" class="slider" onchange="calculateHexs()">
-        <input min="0" max="4" steps="1" value="3" type="range" id="s7" class="slider" onchange="calculateHexs()">
-        <input min="0" max="4" steps="1" value="3" type="range" id="s8" class="slider" onchange="calculateHexs()">
-
+        
+        <img id="sCenter" src="assets/purple.png" />
+        
     </div>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
@@ -48,7 +49,7 @@
         });
 
         const slider_steps = 5;
-        const num_features = 8;
+        const num_features = 6;
         // get k-sized feature vectors for all hexagons
         const scale = 4500;
         const base_height = 60;
@@ -69,7 +70,7 @@
         var min_sum = 0
         var HEX_RANK;
 
-        const colors = ['#fbb4ae', '#b3cde3', '#ccebc5 ', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec']
+        const colors = ['#56494E',  '#2A6041','#F5D547', '#F86624','#17BEBB','#F75590 ']
 
         $.getJSON("./helsinki_hexagons.json", function (data) {
 
@@ -161,7 +162,7 @@
 
         function calculateHexs(init = false) {
             let u = []
-            for (let i = 1; i <= 8; i++) {
+            for (let i = num_features; i > 0; i--) {
                 u.push(document.getElementById(`s${i}`).value / slider_steps)
             }
 
@@ -199,6 +200,10 @@
                 let cur_height = base_height;
                 for (let i = 0; i < num_features; i++) {
 
+                    if(hexData.stats[hexagon][i] == 0) {
+                        continue
+                    }
+
                     stack_hexagons['features'].push({
                         type: "Feature",
                         properties: {
@@ -216,6 +221,7 @@
 
                 // initial top layer
                 let col = (hexData.sums[hexagon] - min_sum) / max_sum;
+
                 base_hexagons['features'].push({
                     type: "Feature",
                     properties: {
