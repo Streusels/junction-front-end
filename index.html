@@ -40,19 +40,23 @@
         });
         const scale = 200;
 
-        var hexagon_collection = { type: "FeatureCollection", features: [] }
+        var base_hexagons = { type: "FeatureCollection", features: [] }
+        var stack_hexagons = { type: "FeatureCollection", features: [] }
+
         $.getJSON("./helsinki_hexagons.json", function (data) {
 
             // get k-sized feature vectors for all hexagons
             const num_features = 8;
-            const scale = 40;
+            const scale = 500;
+            const base_height = 20;
+            
 
             const min_top_layer = [225, 203, 255]
             const max_top_layer = [52, 0, 124]
 
-            const colors = ['#fbb4ae', '#b3cde3', '#ccebc5 ', '#decbe4', '#fed9a6', '#fff2ae', '#e5d8bd', '#d9d9d9']
+            const colors = ['#fbb4ae', '#b3cde3', '#ccebc5 ', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec']
 
-            var features = {sums: [], stats: []}
+            var features = { sums: [], stats: [] }
 
             for (let i = 0; i < data['features'].length; i++) {
                 let vec = []
@@ -72,56 +76,66 @@
             for (let hexagon in data['features']) {
                 // console.log(data['features'][hexagon])
                 //data['features'][hexagon]['geometry']['coordinates'] = data['features'][hexagon]['geometry']['coordinates'][0]
-                
-                
+
+
                 // all poped out
-                /*
+
                 let cur_height = 0;
                 for (let i = 0; i < num_features; i++) {
 
-                    hexagon_collection['features'].push({
+                    stack_hexagons['features'].push({
                         type: "Feature",
                         properties: {
                             color: colors[i],
                             base_height: cur_height,
                             top_height: cur_height + features.stats[hexagon][i],
-                            opacity: features.sums[hexagon]/(scale*num_features)
+                            show: false,
+                            id: parseInt(hexagon)
                         },
                         geometry: data['features'][hexagon].geometry
                     })
                     cur_height += features.stats[hexagon][i]
                 }
-                */
+
 
                 // initial top layer
-                let col = (features.sums[hexagon] - min_sum)/max_sum;
-                hexagon_collection['features'].push({
-                        type: "Feature",
-                        properties: {
-                            color: `rgb(${Math.floor(col*max_top_layer[0] + (1-col)*min_top_layer[0])},
-                                        ${Math.floor(col*max_top_layer[1] + (1-col)*min_top_layer[1])},
-                                        ${Math.floor(col*max_top_layer[2] + (1-col)*min_top_layer[2])})`,
-                            base_height: 0,
-                            top_height: 5,
-                        },
-                        geometry: data['features'][hexagon].geometry
-                    })
+                let col = (features.sums[hexagon] - min_sum) / max_sum;
+                base_hexagons['features'].push({
+                    type: "Feature",
+                    properties: {
+                        color: `rgb(${Math.floor(col * max_top_layer[0] + (1 - col) * min_top_layer[0])},
+                                        ${Math.floor(col * max_top_layer[1] + (1 - col) * min_top_layer[1])},
+                                        ${Math.floor(col * max_top_layer[2] + (1 - col) * min_top_layer[2])})`,
+                        base_height: 0,
+                        top_height: base_height,
+                        show: true,
+                        id: parseInt(hexagon),
+
+                    },
+                    geometry: data['features'][hexagon].geometry,
+                    id: parseInt(hexagon)
+                })
 
             }
 
-            console.log('Hexa', hexagon_collection);
+            console.log('Hexa', base_hexagons);
 
             map.on('load', function () {
 
-                map.addSource('hexagon', {
+                map.addSource('base', {
                     type: 'geojson',
-                    data: hexagon_collection
+                    data: base_hexagons,
+                });
+
+                map.addSource('stacks', {
+                    type: 'geojson',
+                    data: stack_hexagons,
                 });
 
                 map.addLayer({
-                    id: 'hexagon',
+                    id: 'base-hexagons',
                     type: 'fill-extrusion',
-                    source: 'hexagon',
+                    source: 'base',
                     layout: {},
                     paint: {
                         'fill-extrusion-color': {
@@ -136,8 +150,61 @@
                             type: 'identity',
                             property: 'top_height'
                         },
-                        'fill-extrusion-opacity': 0.8
+                        'fill-extrusion-opacity': 0.6
+                    },
+                    filter: ['==', 'show', true]
+                });
+
+                map.addLayer({
+                    id: 'stack-hexagons',
+                    type: 'fill-extrusion',
+                    source: 'stacks',
+                    layout: {},
+                    paint: {
+                        'fill-extrusion-color': {
+                            type: 'identity',
+                            property: 'color'
+                        },
+                        'fill-extrusion-base': {
+                            type: 'identity',
+                            property: 'base_height'
+                        },
+                        'fill-extrusion-height': {
+                            type: 'identity',
+                            property: 'top_height'
+                        },
+                        'fill-extrusion-opacity': 0.95
+                    },
+                    filter: ['==', 'show', true]
+                });
+
+                map.on('mousemove', 'base-hexagons', (e) => {
+
+                    map.getCanvas().style.cursor = 'pointer';
+
+                    const feature = e.features[0];
+
+                    console.log(feature)
+
+                    //poped_out.add(feature.id)
+
+                    map.setFilter('stack-hexagons', ['in', 'id', feature.id])
+                    //map.setFilter('base-hexagons', ['!=', 'id', feature.id])
+                    /*
+                    if (e.features.length > 0) {
+                        if (hoveredStateId !== null) {
+                            map.setFeatureState(
+                                { source: 'states', id: hoveredStateId },
+                                { hover: false }
+                            );
+                        }
+                        hoveredStateId = e.features[0].id;
+                        map.setFeatureState(
+                            { source: 'states', id: hoveredStateId },
+                            { hover: true }
+                        );
                     }
+                    */
                 });
             });
         });
