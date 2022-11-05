@@ -38,7 +38,6 @@
             zoom: 10,
             pitch: 60
         });
-        const scale = 200;
 
         var base_hexagons = { type: "FeatureCollection", features: [] }
         var stack_hexagons = { type: "FeatureCollection", features: [] }
@@ -49,7 +48,11 @@
             const num_features = 8;
             const scale = 500;
             const base_height = 20;
-            
+
+            var last_id = -1;
+
+            const poped_out = new Set();
+
 
             const min_top_layer = [225, 203, 255]
             const max_top_layer = [52, 0, 124]
@@ -180,31 +183,40 @@
 
                 map.on('mousemove', 'base-hexagons', (e) => {
 
-                    map.getCanvas().style.cursor = 'pointer';
+                    //map.getCanvas().style.cursor = 'pointer';
 
                     const feature = e.features[0];
 
-                    console.log(feature)
+                    //console.log(feature.id, stack_hexagons.features[feature.id].properties['show'])
 
-                    //poped_out.add(feature.id)
+                    //console.log(poped_out)
 
-                    map.setFilter('stack-hexagons', ['in', 'id', feature.id])
-                    //map.setFilter('base-hexagons', ['!=', 'id', feature.id])
-                    /*
-                    if (e.features.length > 0) {
-                        if (hoveredStateId !== null) {
-                            map.setFeatureState(
-                                { source: 'states', id: hoveredStateId },
-                                { hover: false }
-                            );
+                    if (!poped_out.has(feature.id)) {
+                        poped_out.add(feature.id)
+
+                        map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                        poped_out.delete(feature.id)
+                    } else {
+                        if (feature.id != last_id) {
+                            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
                         }
-                        hoveredStateId = e.features[0].id;
-                        map.setFeatureState(
-                            { source: 'states', id: hoveredStateId },
-                            { hover: true }
-                        );
                     }
-                    */
+
+                    last_id = feature.id;
+                });
+
+                map.on('click', 'base-hexagons', (e) => {
+
+                    const feature = e.features[0];
+
+                    if (!poped_out.has(feature.id)) {
+                        poped_out.add(feature.id)
+
+                        map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                    } else {
+                        poped_out.delete(feature.id)
+                        map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                    }
                 });
             });
         });
