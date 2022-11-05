@@ -8,19 +8,7 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-
-        #map {
-            position: absolute;
-            top: 4vh;
-            bottom: 0;
-            width: 100%;
-        }
-    </style>
+    <link href="styles.css" rel="stylesheet"/>
 </head>
 
 <body>
@@ -29,6 +17,24 @@
 
     <button onclick="expandAll()">expand all</button>
     <button onclick="contractAll()">contract all</button>
+
+    <div id='selector'>
+        <span id="c1" class="dot"></span>
+        <span id="c2" class="dot"></span>
+        <span id="c3" class="dot"></span>
+        <span id="c4" class="dot"></span>
+        <span id="c5" class="dot"></span>
+        
+        <input min="1" max="5" steps="1" value="3" type="range" id="s1" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s2" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s3" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s4" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s5" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s6" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s7" class="slider" onchange="calculateHexs()">
+        <input min="1" max="5" steps="1" value="3" type="range" id="s8" class="slider" onchange="calculateHexs()">
+        
+    </div> 
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
         var startingPoint = [24.9456, 60.16776];
@@ -47,10 +53,14 @@
         var NUM_HEX = -1;
         var poped_out = new Set();
 
+        var hexData;
+
         $.getJSON("./helsinki_hexagons.json", function (data) {
 
 
             NUM_HEX = data['features'].length;
+
+            hexData = data;
 
             // get k-sized feature vectors for all hexagons
             const num_features = 8;
@@ -240,6 +250,10 @@
         function contractAll(){
             poped_out.clear()
             map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+        }
+
+        function calculateHexs() {
+
         }
 
     </script>

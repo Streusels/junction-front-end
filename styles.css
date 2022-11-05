@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#map {
+    position: absolute;
+    top: 4vh;
+    bottom: 0;
+    width: 100%;
+}
+
+#selector {
+    position: absolute;
+    right: 0;
+    height: 25vh;
+    width: 25vh;
+    bottom: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: 2px solid;
+    border-radius: 75%;
+    height: 1.5vh;
+    width: 1.5vh;
+    max-width: 80px;
+    position: relative;
+    background-color: white;
+    cursor: -webkit-grab;
+
+    -webkit-transition: border 1000ms ease;
+    transition: border 1000ms ease;
+}
+
+.dot {
+    align-items: center;
+    justify-items: center;
+    background-color: transparent;
+    border-radius: 50%;
+    border: 2px solid black;
+    display: inline-block;
+    position: absolute;
+}
+
+#c1 {
+    width: 2vh;
+    height: 2vh;
+    transform: translate(8.5vh, 9.1vh);
+}
+#c2 {
+    width: 6vh;
+    height: 6vh;
+    transform: translate(6.5vh, 7.1vh);
+}
+#c3 {
+    width: 10vh;
+    height: 10vh;
+    transform: translate(4.5vh, 5.1vh);
+}
+#c4 {
+    width: 13.5vh;
+    height: 13.5vh;
+    transform: translate(2.8vh, 3.4vh);
+}
+#c5 {
+    width: 17vh;
+    height: 17vh;
+    transform: translate(1vh, 1.5vh);
+}
+
+.slider {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    position: absolute;
+    width: 9vh;
+    height: 2px;
+    cursor: pointer;
+    background-image: linear-gradient(.25turn, rgb(255, 203, 255), rgb(52, 0, 124));
+}
+
+#s1 {
+    transform: translate(8.6vh, 13.5vh) rotateY(0deg) rotate(45deg);
+}
+
+#s2 {
+    transform: translate(5vh, 15vh) rotateY(0deg) rotate(90deg);
+}
+
+#s3 {
+    transform: translate(1.4vh, 13.6vh) rotateY(0deg) rotate(135deg);
+}
+
+#s4 {
+    transform: translate(0vh, 10vh) rotateY(0deg) rotate(180deg);
+}
+
+#s5 {
+    transform: translate(1.4vh, 6.4vh) rotateY(0deg) rotate(-135deg);
+}
+
+#s6 {
+    transform: translate(5vh, 4.9vh) rotateY(0deg) rotate(-90deg);
+}
+
+#s7 {
+    transform: translate(8.6vh, 6.5vh) rotateY(0deg) rotate(-45deg);
+}
+
+#s8 {
+    transform: translate(10vh, 10vh) rotateY(0deg) rotate(0deg);
+}
