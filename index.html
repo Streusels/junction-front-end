@@ -8,7 +8,7 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link href="styles.css" rel="stylesheet"/>
+    <link href="styles.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -16,7 +16,7 @@
     <div id='map'></div>
 
     <button onclick="expandAll()">expand all</button>
-    <button onclick="contractAll()">contract all</button>
+    <button onclick="contractAll()">collapse all</button>
 
     <div id='selector'>
         <span id="c1" class="dot"></span>
@@ -24,17 +24,17 @@
         <span id="c3" class="dot"></span>
         <span id="c4" class="dot"></span>
         <span id="c5" class="dot"></span>
-        
-        <input min="1" max="5" steps="1" value="3" type="range" id="s1" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s2" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s3" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s4" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s5" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s6" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s7" class="slider" onchange="calculateHexs()">
-        <input min="1" max="5" steps="1" value="3" type="range" id="s8" class="slider" onchange="calculateHexs()">
-        
-    </div> 
+
+        <input min="0" max="4" steps="1" value=3 type="range" id="s1" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value=5 type="range" id="s2" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s3" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s4" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s5" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s6" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s7" class="slider" onchange="calculateHexs()">
+        <input min="0" max="4" steps="1" value="3" type="range" id="s8" class="slider" onchange="calculateHexs()">
+
+    </div>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
         var startingPoint = [24.9456, 60.16776];
@@ -47,152 +47,59 @@
             pitch: 60
         });
 
+        const slider_steps = 5;
+        const num_features = 8;
+        // get k-sized feature vectors for all hexagons
+        const scale = 4500;
+        const base_height = 60;
+
         var base_hexagons = { type: "FeatureCollection", features: [] }
         var stack_hexagons = { type: "FeatureCollection", features: [] }
 
         var NUM_HEX = -1;
         var poped_out = new Set();
 
+        var HEX_GRID;
         var hexData;
+
+        const min_top_layer = [225, 203, 255]
+        const max_top_layer = [52, 0, 124]
+
+        var max_sum = 8
+        var min_sum = 0
+        var HEX_RANK;
+
+        const colors = ['#fbb4ae', '#b3cde3', '#ccebc5 ', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec']
 
         $.getJSON("./helsinki_hexagons.json", function (data) {
 
 
             NUM_HEX = data['features'].length;
 
-            hexData = data;
+            HEX_GRID = data;
 
-            // get k-sized feature vectors for all hexagons
-            const num_features = 8;
-            const scale = 500;
-            const base_height = 60;
+
 
             var last_id = -1;
 
-            const min_top_layer = [225, 203, 255]
-            const max_top_layer = [52, 0, 124]
-
-            const colors = ['#fbb4ae', '#b3cde3', '#ccebc5 ', '#decbe4', '#fed9a6', '#ffffcc', '#e5d8bd', '#fddaec']
-
-            var features = { sums: [], stats: [] }
-
+            // Pseudo Data
+            HEX_RANK = []
             for (let i = 0; i < data['features'].length; i++) {
                 let vec = []
                 for (let k = 0; k < num_features; k++) {
-                    vec.push(scale * Math.random() + 1)
+                    vec.push(Math.random())
                 }
-                features.stats.push(vec)
-                features.sums.push(vec.reduce((a, b) => a + b, 0))
+                HEX_RANK.push(vec)
             }
+            // end Pseudo data
 
-            const max_sum = Math.max(...features.sums)
-            const min_sum = Math.min(...features.sums)
-            console.log(max_sum, min_sum)
+            calculateHexs(true)
 
-            console.log(features)
-
-            for (let hexagon in data['features']) {
-                // console.log(data['features'][hexagon])
-                //data['features'][hexagon]['geometry']['coordinates'] = data['features'][hexagon]['geometry']['coordinates'][0]
-
-
-                // all poped out
-
-                let cur_height = base_height;
-                for (let i = 0; i < num_features; i++) {
-
-                    stack_hexagons['features'].push({
-                        type: "Feature",
-                        properties: {
-                            color: colors[i],
-                            base_height: cur_height,
-                            top_height: cur_height + features.stats[hexagon][i],
-                            show: false,
-                            id: parseInt(hexagon)
-                        },
-                        geometry: data['features'][hexagon].geometry
-                    })
-                    cur_height += features.stats[hexagon][i]
-                }
-
-
-                // initial top layer
-                let col = (features.sums[hexagon] - min_sum) / max_sum;
-                base_hexagons['features'].push({
-                    type: "Feature",
-                    properties: {
-                        color: `rgb(${Math.floor(col * max_top_layer[0] + (1 - col) * min_top_layer[0])},
-                                        ${Math.floor(col * max_top_layer[1] + (1 - col) * min_top_layer[1])},
-                                        ${Math.floor(col * max_top_layer[2] + (1 - col) * min_top_layer[2])})`,
-                        base_height: 0,
-                        top_height: base_height,
-                        show: true,
-                        id: parseInt(hexagon),
-
-                    },
-                    geometry: data['features'][hexagon].geometry,
-                    id: parseInt(hexagon)
-                })
-
-            }
+            console.log(stack_hexagons)
 
             map.on('load', function () {
 
-                map.addSource('base', {
-                    type: 'geojson',
-                    data: base_hexagons,
-                });
-
-                map.addSource('stacks', {
-                    type: 'geojson',
-                    data: stack_hexagons,
-                });
-
-                map.addLayer({
-                    id: 'base-hexagons',
-                    type: 'fill-extrusion',
-                    source: 'base',
-                    layout: {},
-                    paint: {
-                        'fill-extrusion-color': {
-                            type: 'identity',
-                            property: 'color'
-                        },
-                        'fill-extrusion-base': {
-                            type: 'identity',
-                            property: 'base_height'
-                        },
-                        'fill-extrusion-height': {
-                            type: 'identity',
-                            property: 'top_height'
-                        },
-                        'fill-extrusion-opacity': 0.6
-                    },
-                    filter: ['==', 'show', true]
-                });
-
-                map.addLayer({
-                    id: 'stack-hexagons',
-                    type: 'fill-extrusion',
-                    source: 'stacks',
-                    layout: {},
-                    paint: {
-                        'fill-extrusion-color': {
-                            type: 'identity',
-                            property: 'color'
-                        },
-                        'fill-extrusion-base': {
-                            type: 'identity',
-                            property: 'base_height'
-                        },
-                        'fill-extrusion-height': {
-                            type: 'identity',
-                            property: 'top_height'
-                        },
-                        'fill-extrusion-opacity': 0.95
-                    },
-                    filter: ['==', 'show', true]
-                });
+                refreshLayers(true);
 
                 map.on('mousemove', 'base-hexagons', (e) => {
 
@@ -247,13 +154,157 @@
             map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
         }
 
-        function contractAll(){
+        function contractAll() {
             poped_out.clear()
             map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
         }
 
-        function calculateHexs() {
+        function calculateHexs(init = false) {
+            let u = []
+            for (let i = 1; i <= 8; i++) {
+                u.push(document.getElementById(`s${i}`).value / slider_steps)
+            }
 
+            console.log(u)
+
+            hexData = { sums: [], stats: [] }
+
+            for (let i = 0; i < HEX_RANK.length; i++) {
+                let vec = []
+                for (let j = 0; j < num_features; j++) {
+                    vec.push(HEX_RANK[i][j] * u[j])
+                }
+                hexData.stats.push(vec);
+                hexData.sums.push(hexData.stats[i].reduce((a, b) => a + b, 0))
+            }
+            max_sum = Math.max(...hexData.sums)
+            min_sum = Math.min(...hexData.sums)
+
+
+            console.log(max_sum, min_sum)
+
+            console.log(hexData)
+
+            // reset data
+            base_hexagons = { type: "FeatureCollection", features: [] }
+            stack_hexagons = { type: "FeatureCollection", features: [] }
+
+            for (let hexagon = 0; hexagon < HEX_RANK.length; hexagon++) {
+                // console.log(data['features'][hexagon])
+                //data['features'][hexagon]['geometry']['coordinates'] = data['features'][hexagon]['geometry']['coordinates'][0]
+
+
+                // all poped out
+
+                let cur_height = base_height;
+                for (let i = 0; i < num_features; i++) {
+
+                    stack_hexagons['features'].push({
+                        type: "Feature",
+                        properties: {
+                            color: colors[i],
+                            base_height: cur_height,
+                            top_height: cur_height + hexData.stats[hexagon][i] * scale / max_sum,
+                            show: false,
+                            id: parseInt(hexagon)
+                        },
+                        geometry: HEX_GRID['features'][hexagon].geometry
+                    })
+                    cur_height += hexData.stats[hexagon][i] * scale / max_sum
+                }
+
+
+                // initial top layer
+                let col = (hexData.sums[hexagon] - min_sum) / max_sum;
+                base_hexagons['features'].push({
+                    type: "Feature",
+                    properties: {
+                        color: `rgb(${Math.floor(col * max_top_layer[0] + (1 - col) * min_top_layer[0])},
+                                        ${Math.floor(col * max_top_layer[1] + (1 - col) * min_top_layer[1])},
+                                        ${Math.floor(col * max_top_layer[2] + (1 - col) * min_top_layer[2])})`,
+                        base_height: 0,
+                        top_height: base_height,
+                        show: true,
+                        id: parseInt(hexagon),
+
+                    },
+                    geometry: HEX_GRID['features'][hexagon].geometry,
+                    id: parseInt(hexagon)
+                })
+            }
+
+            if (!init) {
+                refreshLayers();
+            }
+        }
+
+        function refreshLayers(init = false) {
+
+            if (!init) {
+                map.removeSource('base')
+                map.removeSource('stacks')
+
+                map.removeLayer('base-hexagons')
+                map.removeLayer('stack-hexagons')
+            }
+
+            map.addSource('base', {
+                type: 'geojson',
+                data: base_hexagons,
+            });
+
+            map.addSource('stacks', {
+                type: 'geojson',
+                data: stack_hexagons,
+            });
+
+            map.addLayer({
+                id: 'base-hexagons',
+                type: 'fill-extrusion',
+                source: 'base',
+                layout: {},
+                paint: {
+                    'fill-extrusion-color': {
+                        type: 'identity',
+                        property: 'color'
+                    },
+                    'fill-extrusion-base': {
+                        type: 'identity',
+                        property: 'base_height'
+                    },
+                    'fill-extrusion-height': {
+                        type: 'identity',
+                        property: 'top_height'
+                    },
+                    'fill-extrusion-opacity': 0.6
+                },
+                filter: ['==', 'show', true]
+            });
+
+            map.addLayer({
+                id: 'stack-hexagons',
+                type: 'fill-extrusion',
+                source: 'stacks',
+                layout: {},
+                paint: {
+                    'fill-extrusion-color': {
+                        type: 'identity',
+                        property: 'color'
+                    },
+                    'fill-extrusion-base': {
+                        type: 'identity',
+                        property: 'base_height'
+                    },
+                    'fill-extrusion-height': {
+                        type: 'identity',
+                        property: 'top_height'
+                    },
+                    'fill-extrusion-opacity': 0.95
+                },
+                filter: ['==', 'show', true]
+            });
+
+            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
         }
 
     </script>
