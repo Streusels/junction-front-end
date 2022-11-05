@@ -35,73 +35,54 @@
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v9',
             center: startingPoint,
-            zoom: 12,
+            zoom: 10,
             pitch: 60
         });
-
-        let coneFeatureCollection = { type: "FeatureCollection", features: [] }
-
-        let baseWidthInKM = 3 / 1000;
-        let baseHeight = 0.8;
-        let levelsOfCone = 20;
         const scale = 200;
-
-        coneFeatureCollection.features.push({
-            type: "Feature",
-            properties: {
-                color: "#ff0000",
-                base_height: 0,
-                top_height: baseHeight * scale
-            },
-            geometry: turf.envelope(turf.buffer(turf.circle(startingPoint, baseWidthInKM * scale), (baseWidthInKM / 3) * scale)).geometry
-        })
-
-
-        let whiteLevelsBottom = levelsOfCone / 3;
-        let whiteLevelsTop = levelsOfCone / 1.5;
-
-        for (let i = 0; i < levelsOfCone; i++) {
-            let roadConeLevel = turf.circle(startingPoint, (baseWidthInKM - (baseWidthInKM * ((i + 1) * 0.8 / levelsOfCone))) * scale);
-            coneFeatureCollection.features.push({
-                type: "Feature",
-                properties: {
-                    color: i > whiteLevelsBottom && i < whiteLevelsTop ? '#FFFFFF' : "#FF7221",
-                    // color : "#FF7221",
-                    base_height: (baseHeight + (i * 0.2)) * scale,
-                    top_height: (baseHeight + ((i * baseHeight) + 0.2)) * scale
-                },
-                geometry: roadConeLevel.geometry
-            })
-        }
-
-        console.log('Cone', coneFeatureCollection);
 
         var hexagon_collection = { type: "FeatureCollection", features: [] }
         $.getJSON("./helsinki_hexagons.json", function (data) {
+
+            // get k-sized feature vectors for all hexagons
+            const num_features = 8;
+
+            const colors = ['#dd0000', '#00aa00', '#0000ee', '#aaaa00', '#11ff11', '#3300ee', '#bb77bb', '#eeeeee']
+
+            var features = []
+
+            for (let i = 0; i < data['features'].length; i++) {
+                let vec = []
+                for (let k = 0; k < num_features; k++) {
+                    vec.push(40 * Math.random() + 1)
+                }
+                features.push(vec)
+            }
+
             c = 21
             for (let hexagon in data['features']) {
                 // console.log(data['features'][hexagon])
                 //data['features'][hexagon]['geometry']['coordinates'] = data['features'][hexagon]['geometry']['coordinates'][0]
-                hexagon_collection['features'].push({
-                    type: "Feature",
-                    properties: {
-                        color: "#FF7221",
-                        // color : "#FF7221",
-                        base_height: 0,
-                        top_height: scale*(0.1 + Math.random())
-                    },
-                    geometry: data['features'][hexagon].geometry
-                })
-                
+                let cur_height = 0;
+
+                for (let i = 0; i < num_features; i++) {
+
+                    hexagon_collection['features'].push({
+                        type: "Feature",
+                        properties: {
+                            color: colors[i],
+                            base_height: cur_height,
+                            top_height: cur_height + features[hexagon][i]
+                        },
+                        geometry: data['features'][hexagon].geometry
+                    })
+                    cur_height += features[hexagon][i]
+                }
+
             }
 
             console.log('Hexa', hexagon_collection);
 
             map.on('load', function () {
-                map.addSource('dome', {
-                    type: 'geojson',
-                    data: coneFeatureCollection
-                });
 
                 map.addSource('hexagon', {
                     type: 'geojson',
