@@ -31,6 +31,36 @@ input[type="range"]::-webkit-slider-thumb {
     transform: rotateY(0deg) rotate(90deg);
 }
 
+.icon {
+    width: 4.5vh;
+    position: absolute;
+}
+
+#fork {
+    transform: translate(7.5vh, -3vh);
+}
+
+#bowling {
+    transform: translate(17vh, 2vh);
+}
+
+#harp {
+    transform: translate(17vh, 13vh);
+}
+
+#trees {
+    transform: translate(-2vh, 13.5vh);
+}
+
+#shop {
+    transform: translate(-2vh, 2vh);
+}
+
+#bus {
+    transform: translate(7.25vh, 18.5vh);
+    width: 5vh;
+}
+
 .dot {
     align-items: center;
     justify-items: center;
