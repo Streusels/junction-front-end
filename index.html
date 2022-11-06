@@ -25,16 +25,16 @@
         <span id="c4" class="dot"></span>
         <span id="c5" class="dot"></span>
 
-        
+
         <input min="0" max="4" steps="1" value=3 type="range" id="s1" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value=5 type="range" id="s2" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s3" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s4" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s5" class="slider" onchange="calculateHexs()">
         <input min="0" max="4" steps="1" value="3" type="range" id="s6" class="slider" onchange="calculateHexs()">
-        
+
         <img id="sCenter" src="assets/purple.png" />
-        
+
     </div>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
@@ -65,13 +65,13 @@
         var hexData;
 
         const min_top_layer = [225, 203, 255]
-        const max_top_layer = [52, 0, 124]
+        const max_top_layer = [45, 0, 113]
 
         var max_sum = 8
         var min_sum = 0
         var HEX_RANK;
 
-        const colors = ['#56494E',  '#2A6041','#F5D547', '#F86624','#17BEBB','#F75590 ']
+        const colors = ['#56494E', '#2A6041', '#F5D547', '#F86624', '#17BEBB', '#F75590 ']
 
         $.getJSON("./helsinki_hexagons.json", function (data) {
 
@@ -84,67 +84,72 @@
 
             var last_id = -1;
 
-            // Pseudo Data
-            HEX_RANK = []
-            for (let i = 0; i < data['features'].length; i++) {
-                let vec = []
-                for (let k = 0; k < num_features; k++) {
-                    vec.push(Math.random())
+            $.getJSON("./hexrank.json", function (ranks) {
+                HEX_RANK = ranks.features
+                
+                // Pseudo Data
+                /*
+                for (let i = 0; i < data['features'].length; i++) {
+                    let vec = []
+                    for (let k = 0; k < num_features; k++) {
+                        vec.push(Math.random())
+                    }
+                    HEX_RANK.push(vec)
                 }
-                HEX_RANK.push(vec)
-            }
-            // end Pseudo data
+                */
+                // end Pseudo data
 
-            calculateHexs(true)
+                calculateHexs(true)
 
-            console.log(stack_hexagons)
+                console.log(stack_hexagons)
 
-            map.on('load', function () {
+                map.on('load', function () {
 
-                refreshLayers(true);
+                    refreshLayers(true);
 
-                map.on('mousemove', 'base-hexagons', (e) => {
+                    map.on('mousemove', 'base-hexagons', (e) => {
 
-                    //map.getCanvas().style.cursor = 'pointer';
+                        //map.getCanvas().style.cursor = 'pointer';
 
-                    const feature = e.features[0];
+                        const feature = e.features[0];
 
-                    //console.log(feature.id, stack_hexagons.features[feature.id].properties['show'])
+                        //console.log(feature.id, stack_hexagons.features[feature.id].properties['show'])
 
-                    //console.log(poped_out)
+                        //console.log(poped_out)
 
-                    if (!poped_out.has(feature.id)) {
-                        poped_out.add(feature.id)
+                        if (!poped_out.has(feature.id)) {
+                            poped_out.add(feature.id)
 
-                        map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
-                        poped_out.delete(feature.id)
-                    } else {
-                        if (feature.id != last_id) {
+                            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                            poped_out.delete(feature.id)
+                        } else {
+                            if (feature.id != last_id) {
+                                map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                            }
+                        }
+
+                        last_id = feature.id;
+                    });
+
+                    map.on('click', 'base-hexagons', (e) => {
+
+                        const feature = e.features[0];
+
+                        if (!poped_out.has(feature.id)) {
+                            poped_out.add(feature.id)
+
+                            map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
+                        } else {
+                            poped_out.delete(feature.id)
                             map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
                         }
-                    }
+                    });
 
-                    last_id = feature.id;
-                });
-
-                map.on('click', 'base-hexagons', (e) => {
-
-                    const feature = e.features[0];
-
-                    if (!poped_out.has(feature.id)) {
-                        poped_out.add(feature.id)
+                    map.on('mouseleave', 'base-hexagons', (e) => {
 
                         map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
-                    } else {
-                        poped_out.delete(feature.id)
-                        map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
-                    }
-                });
 
-                map.on('mouseleave', 'base-hexagons', (e) => {
-
-                    map.setFilter('stack-hexagons', ['in', 'id', ...Array.from(poped_out)])
-
+                    });
                 });
             });
         });
@@ -201,7 +206,7 @@
                 let cur_height = base_height;
                 for (let i = 0; i < num_features; i++) {
 
-                    if(hexData.stats[hexagon][i] < 0.001) {
+                    if (hexData.stats[hexagon][i] < 0.001) {
                         continue
                     }
 
@@ -242,19 +247,19 @@
                 })
 
                 // Antons Deckel  
-                stack_hexagons['features'].push({ 
-                    type: "Feature", 
-                    properties: { 
-                        color: ccol, 
-                        base_height: cur_height, 
-                        top_height: cur_height + base_height, 
-                        show: false, 
-                        id: parseInt(hexagon) 
-                    }, 
-                    geometry: HEX_GRID['features'][hexagon].geometry 
-                }) 
-                cur_height += base_height 
- 
+                stack_hexagons['features'].push({
+                    type: "Feature",
+                    properties: {
+                        color: ccol,
+                        base_height: cur_height,
+                        top_height: cur_height + base_height,
+                        show: false,
+                        id: parseInt(hexagon)
+                    },
+                    geometry: HEX_GRID['features'][hexagon].geometry
+                })
+                cur_height += base_height
+
                 /* Antons säulen
                 hex_coords = Array.from(HEX_GRID['features'][hexagon].geometry.coordinates[0])
                 center = [0,0] 
@@ -350,7 +355,7 @@
                         type: 'identity',
                         property: 'top_height'
                     },
-                    'fill-extrusion-opacity': 0.6
+                    'fill-extrusion-opacity': 0.8
                 },
                 filter: ['==', 'show', true]
             });
